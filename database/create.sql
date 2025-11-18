@@ -8,3 +8,11 @@ CREATE TABLE ccca.account (
     document TEXT NOT NULL,
     password TEXT NOT NULL
 );
+
+
+CREATE TABLE ccca.account_asset (
+    account_id UUID,
+    asset_id TEXT,
+    quantity NUMERIC,
+    PRIMARY KEY (account_id, asset_id)
+)
