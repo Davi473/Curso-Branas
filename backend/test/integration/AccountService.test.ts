@@ -1,14 +1,20 @@
 import sinon from "sinon";
-import { AccountDAODatabase, AccountDAOMemory } from "../src/AccountDAO";
-import AccountService from "../src/AccountService";
+import { AccountDAODatabase, AccountDAOMemory } from "../../src/infra/dao/AccountDAO";
+import AccountService from "../../src/application/service/AccountService";
+import Registry from "../../src/infra/di/Registry";
+import { AccountAssetDAODatabase } from "../../src/infra/dao/AccountAssetDAO";
+import DatabaseConnection, { PgPromiseAdapter } from "../../src/infra/database/DatabaseConnection";
 
 let accountService: AccountService;
+let connection: DatabaseConnection;
 
 beforeEach(() => {
-    const accountDAO = new AccountDAODatabase();
-    // const accountDAO = new AccountDAOMemory();
-    accountService = new AccountService(accountDAO);
-})
+    connection = new PgPromiseAdapter()
+    Registry.getInstance().provide("databaseConnection", connection);
+    Registry.getInstance().provide("accountDAO",  new AccountDAODatabase());
+    Registry.getInstance().provide("accountAssetDAO", new AccountAssetDAODatabase());
+    accountService = new AccountService();
+});
 
 test("Deve criar uma conta", async () => {
     const input = {
@@ -110,16 +116,16 @@ test("Deve criar uma conta com spy", async () => {
     getByIdSpy.restore();
 });
 
-test.only("Deve criar uma conta com mock", async () => {
-    const saveSpy = sinon.spy(AccountDAODatabase.prototype, "save");
-    const getByIdSpy = sinon.spy(AccountDAODatabase.prototype, "getById");
+test("Deve criar uma conta com mock", async () => {
+    const accountDAOMock = sinon.mock(AccountDAODatabase.prototype);
+    accountDAOMock.expects("save").once().resolves();
     const input = {
         name: "John Doe",
         email: "john.doe@gmail.com",
         document: "87748248800",
         password: "aseQRT987"
     }
-    
+    accountDAOMock.expects("getById").once().resolves(input);
     const outputSignup = await accountService.signup(input);
     const outputGetAccount = await accountService.getAccount(outputSignup.accountId);
     expect(outputSignup.accountId).toBeDefined();
@@ -127,9 +133,104 @@ test.only("Deve criar uma conta com mock", async () => {
     expect(outputGetAccount.email).toBe(input.email);
     expect(outputGetAccount.document).toBe(input.document);
     expect(outputGetAccount.password).toBe(input.password);
-    expect(saveSpy.calledOnce).toBe(true);
-    expect(getByIdSpy.calledWith(outputSignup.accountId)).toBe(true);
-    expect(getByIdSpy.calledOnce).toBe(true);
-    saveSpy.restore();
-    getByIdSpy.restore();
+    accountDAOMock.verify();
+    accountDAOMock.restore();
 });
+
+test("Deve criar uma conta com fake", async () => {
+    const accountDAO = new AccountDAOMemory();
+    Registry.getInstance().provide("accountDAO", accountDAO);
+    accountService = new AccountService();
+    const input = {
+        name: "John Doe",
+        email: "john.doe@gmail.com",
+        document: "87748248800",
+        password: "aseQRT987"
+    }
+    const outputSignup = await accountService.signup(input);
+    const outputGetAccount = await accountService.getAccount(outputSignup.accountId);
+    expect(outputSignup.accountId).toBeDefined();
+    expect(outputGetAccount.name).toBe(input.name);
+    expect(outputGetAccount.email).toBe(input.email);
+    expect(outputGetAccount.document).toBe(input.document);
+    expect(outputGetAccount.password).toBe(input.password);
+});
+
+test("Deve depositar em uma conta", async () => {
+    const input = {
+        name: "John Doe",
+        email: "john.doe@gmail.com",
+        document: "87748248800",
+        password: "aseQRT987"
+    }
+    const outputSignup = await accountService.signup(input);
+    const inputDeposit = {
+        accountId: outputSignup.accountId,
+        assetId: "USD",
+        quantity: 1000,
+    };
+    await accountService.deposit(inputDeposit);
+    const outputGetAccount = await accountService.getAccount(outputSignup.accountId);
+    expect(outputGetAccount.balances[0].asset_id).toBe("USD");
+    expect(outputGetAccount.balances[0].quantity).toBe("1000");
+});
+
+test("Não deve depositar em uma conta que não existe", async () => {
+    const inputDeposit = {
+        accountId: crypto.randomUUID(),
+        assetId: "USD",
+        quantity: 1000,
+    };
+    await expect(() => accountService.deposit(inputDeposit)).rejects.toThrow(new Error("Account not found"));
+});
+
+test("Deve sacar de uma conta", async () => {
+    const input = {
+        name: "John Doe",
+        email: "john.doe@gmail.com",
+        document: "87748248800",
+        password: "aseQRT987"
+    }
+    const outputSignup = await accountService.signup(input);
+    const inputDeposit = {
+        accountId: outputSignup.accountId,
+        assetId: "USD",
+        quantity: 1000,
+    };
+    await accountService.deposit(inputDeposit);
+    const inputWithdraw = {
+        accountId: outputSignup.accountId,
+        assetId: "USD",
+        quantity: 500
+    }
+    await accountService.withdraw(inputWithdraw);
+    const outputGetAccount = await accountService.getAccount(outputSignup.accountId);
+    expect(outputGetAccount.balances[0].asset_id).toBe("USD");
+    expect(outputGetAccount.balances[0].quantity).toBe("500");
+});
+
+test("Não deve sacar de uma conta se não tiver saldo", async () => {
+    const input = {
+        name: "John Doe",
+        email: "john.doe@gmail.com",
+        document: "87748248800",
+        password: "aseQRT987"
+    }
+    const outputSignup = await accountService.signup(input);
+    const inputDeposit = {
+        accountId: outputSignup.accountId,
+        assetId: "USD",
+        quantity: 500,
+    };
+    await accountService.deposit(inputDeposit);
+    const inputWithdraw = {
+        accountId: outputSignup.accountId,
+        assetId: "USD",
+        quantity: 1000
+    }
+    await expect(() => accountService.withdraw(inputWithdraw)).rejects.toThrow(new Error("Insuficient funds"));
+});
+
+afterEach(async () => {
+    await connection.close();
+})

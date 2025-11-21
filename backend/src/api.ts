@@ -1,32 +1,25 @@
-import express, { Request, Response } from "express";
-import cors from "cors";
-import AccountService from "./AccountService";
-import { AccountDAODatabase } from "./AccountDAO";
-const app = express();
-app.use(express.json());
-app.use(cors());
+import { PgPromiseAdapter } from "./infra/database/DatabaseConnection";
+import { AccountDAODatabase } from "./infra/dao/AccountDAO";
+import Registry from "./infra/di/Registry";
+import { AccountAssetDAODatabase } from "./infra/dao/AccountAssetDAO";
+import { ExpressAdapter } from "./infra/http/HttpServer";
+import AccountController from "./infra/controller/AccountController";
+import Signup from "./application/usecase/Signup";
+import GetAccount from "./application/usecase/GetAccount";
+import { AccountRepositoryDatabase } from "./infra/repository/AccountRepository";
 
-const accountDAO = new AccountDAODatabase();
-const accountService = new AccountService(accountDAO);
+// Entrypoint
+async function main() {
+    const httpServer = new ExpressAdapter();
+    Registry.getInstance().provide("databaseConnection", new PgPromiseAdapter());
+    Registry.getInstance().provide("accountDAO", new AccountDAODatabase());
+    Registry.getInstance().provide("accountAssetDAO", new AccountAssetDAODatabase());
+    Registry.getInstance().provide("accountRepository", new AccountRepositoryDatabase());
+    Registry.getInstance().provide("getAccount", new GetAccount());
+    Registry.getInstance().provide("signup", new Signup());
+    Registry.getInstance().provide("httpServer", httpServer);
+    new AccountController();
+    httpServer.listen(3000);
+}
 
-app.post("/signup", async (req: Request, res: Response) => {
-    const account = req.body;
-    console.log("/signup", account);
-    try {
-        const output = await accountService.signup(account);
-        res.json(output);
-    } catch (e: any) {
-        res.status(422).json({
-            message: e.message
-        });
-    }
-})
-
-app.get("/accounts/:accountId", async (req: Request, res: Response) => {
-    const accountId = req.params.accountId;
-    console.log(`/accounts/${accountId}`);
-    const output = await accountService.getAccount(accountId);
-    res.json(output);
-})
-
-app.listen(3000);
+main();

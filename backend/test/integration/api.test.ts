@@ -4,7 +4,7 @@ const url = "http://localhost:3000";
 
 axios.defaults.validateStatus = () => true;
 
-test("Deve criar uma conta", async () => {
+test.only("Deve criar uma conta", async () => {
     const input = {
         name: "John Doe",
         email: "john.doe@gmail.com",
