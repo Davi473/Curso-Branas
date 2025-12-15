@@ -18,7 +18,7 @@ CREATE TABLE ccca.account_asset (
     PRIMARY KEY (account_id, asset_id)
 );
 
-CREATE TABLE ccca.order {
+CREATE TABLE ccca.order (
     order_id UUID,
     market_id TEXT,
     account_id UUID,
@@ -30,4 +30,4 @@ CREATE TABLE ccca.order {
     status TEXT,
     timestamp TIMESTAMPTZ,
     PRIMARY KEY (order_id)
-}
+)

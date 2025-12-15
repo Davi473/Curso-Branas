@@ -4,7 +4,7 @@ const url = "http://localhost:3000";
 
 axios.defaults.validateStatus = () => true;
 
-test.only("Deve criar uma conta", async () => {
+test("Deve criar uma conta", async () => {
     const input = {
         name: "John Doe",
         email: "john.doe@gmail.com",
@@ -13,6 +13,7 @@ test.only("Deve criar uma conta", async () => {
     }
     const responseSignup = await axios.post(`${url}/signup`, input);
     const outputSignup = responseSignup.data;
+    console.log(responseSignup.data)
     const responseGetAccount = await axios.get(`${url}/accounts/${outputSignup.accountId}`);
     const outputGetAccount = responseGetAccount.data;
     expect(outputSignup.accountId).toBeDefined();

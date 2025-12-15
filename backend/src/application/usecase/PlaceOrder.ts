@@ -1,5 +1,7 @@
 import AccountRepository from "../../infra/repository/AccountRepository";
 import { inject } from "../../infra/di/Registry";
+import OrderRepository from "../../infra/repository/OrderRepository";
+import Order from "../../domain/Order";
 
 export default class PlaceOrder {
     @inject("accountRepository")

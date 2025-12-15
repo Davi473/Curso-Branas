@@ -7,6 +7,10 @@ import GetAccount from "../../src/application/usecase/GetAccount";
 import Deposit from "../../src/application/usecase/Deposit";
 import Withdraw from "../../src/application/usecase/Withdraw";
 import { AccountRepositoryDatabase } from "../../src/infra/repository/AccountRepository";
+import PlaceOrder from "../../src/application/usecase/PlaceOrder";
+import GetOrder from "../../src/application/usecase/GetOrder";
+import { OrderRepositoryDatabase } from "../../src/infra/repository/OrderRepository";
+import GetDepth from "../../src/application/usecase/GetDepth";
 
 let connection: DatabaseConnection;
 let signup: Signup;
@@ -15,22 +19,27 @@ let deposit: Deposit;
 let withdraw: Withdraw;
 let placeOrder: PlaceOrder;
 let getOrder: GetOrder;
+let getDepth: GetDepth;
 
 beforeEach(() => {
     connection = new PgPromiseAdapter()
     Registry.getInstance().provide("databaseConnection", connection);
-    Registry.getInstance().provide("accountDAO",  new AccountDAODatabase());
+    const accountDAO = new AccountDAODatabase();
+    Registry.getInstance().provide("accountDAO", accountDAO);
     Registry.getInstance().provide("accountAssetDAO", new AccountAssetDAODatabase());
     Registry.getInstance().provide("accountRepository", new AccountRepositoryDatabase());
+    Registry.getInstance().provide("orderRepository", new OrderRepositoryDatabase());
     signup = new Signup();
     getAccount = new GetAccount();
     deposit = new Deposit();
     withdraw = new Withdraw();
     placeOrder = new PlaceOrder();
     getOrder = new GetOrder();
+    getDepth = new GetDepth();
 });
 
 test("Deve criar uma ordem de compra", async () => {
+    const marketId = `BTC/USD/${Math.random()}`;
     const input = {
         name: "John Doe",
         email: "john.doe@gmail.com",
@@ -46,7 +55,7 @@ test("Deve criar uma ordem de compra", async () => {
     await deposit.execute(inputDeposit);
     const inputPlaceOrder = {
         accountId: outputSignup.accountId,
-        marketId: "BTC/USD",
+        marketId,
         side: "buy",
         quantity: 1,
         price: 85000
@@ -58,6 +67,11 @@ test("Deve criar uma ordem de compra", async () => {
     expect(outputGetOrder.side).toBe(inputPlaceOrder.side);
     expect(outputGetOrder.quantity).toBe(inputPlaceOrder.quantity);
     expect(outputGetOrder.price).toBe(inputPlaceOrder.price);
+    const outputGetDepth = await getDepth.execute(marketId);
+    expect(outputGetDepth.buys).toHaveLength(1);
+    expect(outputGetDepth.sells).toHaveLength(0);
+    expect(outputGetDepth.buys[0].quantity).toBe(1);
+    expect(outputGetDepth.buys[0].price).toBe(85000);
 });
 
 afterEach(async () => {
