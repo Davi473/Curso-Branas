@@ -8,9 +8,9 @@ export default class Order {
         readonly side: string,
         readonly quantity: number,
         readonly price: number,
-        readonly fillQuantity: number,
+        public fillQuantity: number,
         readonly fillPrice: number,
-        readonly status: string,
+        public status: string,
         readonly timestamp: Date
     ) {
     }
@@ -22,5 +22,16 @@ export default class Order {
         const fillQuantity = 0;
         const fillPrice = 0;
         return new Order(orderId, accountId, marketId, side, quantity, price, fillQuantity, fillPrice, status, timestamp);
+    }
+
+    public getAvailableQuantity () {
+        return this.quantity - this.fillQuantity;
+    }
+
+    public fill (quantity: number) {
+        this.fillQuantity += quantity;
+        if (this.getAvailableQuantity() === 0) {
+            this.status = "closed";
+        }   
     }
 }

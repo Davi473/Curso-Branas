@@ -4,6 +4,7 @@ import { inject } from "../di/Registry";
 
 export default interface OrderRepository {
     save(order: Order): Promise<void>;
+    update(order: Order): Promise<void>;
     getById(orderId: string): Promise<Order>;
     getByMarketIdAndStatus(marketId: string, status: string): Promise<Order[]>;
 }
@@ -15,6 +16,11 @@ export class OrderRepositoryDatabase implements OrderRepository {
     public async save(order: Order): Promise<void> {
         await this.connection.query("INSERT INTO ccca.order (order_id, account_id, market_id, side, quantity, price, fill_quantity, fill_price, status, timestamp) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
             [order.orderId, order.accountId, order.marketId, order.side, order.quantity, order.price, order.fillQuantity, order.fillPrice, order.status, order.timestamp]);
+    }
+
+    public async update(order: Order): Promise<void> {
+        await this.connection.query("UPDATE ccca.order SET status = $1, fill_quantity = $2, fill_price = $3 WHERE order_id = $4", [order.status, order.fillQuantity, 
+            order.fillPrice, order.orderId]);
     }
 
     public async getById(orderId: string): Promise<Order> {
