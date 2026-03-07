@@ -11,6 +11,8 @@ import PlaceOrder from "../../src/application/usecase/PlaceOrder";
 import GetOrder from "../../src/application/usecase/GetOrder";
 import { OrderRepositoryDatabase } from "../../src/infra/repository/OrderRepository";
 import GetDepth from "../../src/application/usecase/GetDepth";
+import { MediatorMemory } from "../../src/infra/mediator/Mediator";
+import ExecuteOrder from "../../src/application/usecase/ExecuteOrder";
 
 let connection: DatabaseConnection;
 let signup: Signup;
@@ -29,6 +31,8 @@ beforeEach(() => {
     Registry.getInstance().provide("accountAssetDAO", new AccountAssetDAODatabase());
     Registry.getInstance().provide("accountRepository", new AccountRepositoryDatabase());
     Registry.getInstance().provide("orderRepository", new OrderRepositoryDatabase());
+    const mediator = new MediatorMemory();
+    Registry.getInstance().provide("mediator", mediator);
     signup = new Signup();
     getAccount = new GetAccount();
     deposit = new Deposit();
@@ -36,6 +40,10 @@ beforeEach(() => {
     placeOrder = new PlaceOrder();
     getOrder = new GetOrder();
     getDepth = new GetDepth();
+    const executeOrder = new ExecuteOrder();
+    mediator.register("orderPlaced", async (event: any) => {
+        await executeOrder.execute(event.marketId);
+    })
 });
 
 test("Deve criar uma ordem de compra", async () => {
@@ -171,27 +179,29 @@ test("Deve criar duar ordens de compra e uma ordem de venda, no mesmo valor e me
     await placeOrder.execute({
         accountId: outputSignup.accountId,
         marketId,
-        side: "buy",
+        side: "sell",
         quantity: 1,
-        price: 85000
-    });
-    await placeOrder.execute({
-        accountId: outputSignup.accountId,
-        marketId,
-        side: "buy",
-        quantity: 1,
-        price: 85000
+        price: 82000
     });
     await placeOrder.execute({
         accountId: outputSignup.accountId,
         marketId,
         side: "sell",
-        quantity: 3,
+        quantity: 1,
+        price: 84000
+    });
+    const outputPlaceOrder3 = await placeOrder.execute({
+        accountId: outputSignup.accountId,
+        marketId,
+        side: "buy",
+        quantity: 2,
         price: 85000
     });
     const outputGetDepth = await getDepth.execute(marketId);
     expect(outputGetDepth.buys).toHaveLength(0);
-    expect(outputGetDepth.sells).toHaveLength(1);
+    expect(outputGetDepth.sells).toHaveLength(0);
+    const outputGetOrder3 = await getOrder.execute(outputPlaceOrder3.orderId);
+    console.log(outputGetOrder3);
 });
 
 

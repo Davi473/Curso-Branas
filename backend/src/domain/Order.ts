@@ -9,7 +9,7 @@ export default class Order {
         readonly quantity: number,
         readonly price: number,
         public fillQuantity: number,
-        readonly fillPrice: number,
+        public fillPrice: number,
         public status: string,
         readonly timestamp: Date
     ) {
@@ -28,7 +28,8 @@ export default class Order {
         return this.quantity - this.fillQuantity;
     }
 
-    public fill (quantity: number) {
+    public fill (quantity: number, price: number) {
+        this.fillPrice = ((this.fillQuantity * this.fillPrice) + (quantity * price)) / (this.fillQuantity + quantity);
         this.fillQuantity += quantity;
         if (this.getAvailableQuantity() === 0) {
             this.status = "closed";
