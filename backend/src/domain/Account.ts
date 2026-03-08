@@ -1,18 +1,22 @@
-import { validateCpf } from "./validateCpf";
-import { validateEmail } from "./validateEmail";
-import { validateName } from "./validateName";
-import { validatePassword } from "./validatePassword";
+import Email from "./Email";
+import Name from "./Name";
+import Document from "./Document";
+import Password from "./Password";
 
 export default class Account {
     balances: Balance[] = [];
+    private name: Name;
+    private email: Email;
+    private document: Document;
+    private password: Password;
 
     constructor(
-        readonly accountId: string, readonly name: string, readonly email: string, readonly document: string, readonly password: string
+        readonly accountId: string, name: string, email: string, document: string, password: string
     ) {
-        if (!validateName(name)) throw new Error("Invalid name");
-        if (!validateEmail(email)) throw new Error("Invalid email");
-        if (!validateCpf(document)) throw new Error("Invalid document");
-        if (!validatePassword(password)) throw new Error("Invalid password");
+        this.name = new Name(name);
+        this.email = new Email(email);
+        this.document = new Document(document);
+        this.password = new Password(password);
     }
 
     static create (name: string, email: string, document: string, password: string) {
@@ -33,6 +37,22 @@ export default class Account {
         const balance = this.balances.find((balance: Balance) => balance.assetId === assetId);
         if (!balance || balance.quantity < quantity) throw new Error("Insuficient funds");
         balance.quantity -= quantity;
+    }
+
+    public getName(): string {
+        return this.name.getValue();
+    }
+
+    public getEmail(): string {
+        return this.email.getValue();
+    }
+
+    public getDocument(): string {
+        return this.document.getValue();
+    }
+
+    public getPassword(): string {
+        return this.password.getValue();
     }
 }
 
