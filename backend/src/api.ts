@@ -14,35 +14,29 @@ import PlaceOrder from "./application/usecase/PlaceOrder";
 import GetOrder from "./application/usecase/GetOrder";
 import GetDepth from "./application/usecase/GetDepth";
 import OrderController from "./infra/controller/OrderController";
-import Order from "./domain/Order";
 import Book from "./domain/Book";
+import { OrderHandlerBook, OrderHandlerExecuteOrder } from "./infra/handler/OrderHandler";
 
 // Entrypoint
 async function main() {
     const httpServer = new ExpressAdapter();
+    Registry.getInstance().provide("mediator", new MediatorMemory());
     Registry.getInstance().provide("databaseConnection", new PgPromiseAdapter());
     Registry.getInstance().provide("accountDAO", new AccountDAODatabase());
     Registry.getInstance().provide("accountAssetDAO", new AccountAssetDAODatabase());
     Registry.getInstance().provide("accountRepository", new AccountRepositoryDatabase());
-    const orderRepository = new OrderRepositoryDatabase()
-    Registry.getInstance().provide("orderRepository", orderRepository);
+    Registry.getInstance().provide("orderRepository", new OrderRepositoryDatabase());
     Registry.getInstance().provide("getAccount", new GetAccount());
     Registry.getInstance().provide("placeOrder", new PlaceOrder());
     Registry.getInstance().provide("getOrder", new GetOrder());
     Registry.getInstance().provide("getDepth", new GetDepth());
     Registry.getInstance().provide("signup", new Signup());
     Registry.getInstance().provide("httpServer", httpServer);
-    const executeOrder = new ExecuteOrder();
-    const mediator = new MediatorMemory();
-    const book = new Book("BTC-USD");
-    Registry.getInstance().provide("mediator", mediator);
-    mediator.register("orderPlaced", async (order: Order) => {
-        await book.insert(order);
-        console.log(book.buys.length, book.sells.length);
-    });
-    mediator.register("orderFilled", async (order: Order) => {
-        await orderRepository.update(order);
-    });
+    Registry.getInstance().provide("executeOrder", new ExecuteOrder());
+    Registry.getInstance().provide("book", new Book("BTC-USD"));
+    // const handle = new OrderHandlerBook();
+    const handle = new OrderHandlerExecuteOrder();
+    handle.handle();
     new AccountController();
     new OrderController();
     httpServer.listen(3000);

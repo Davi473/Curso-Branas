@@ -39,6 +39,13 @@ export default class Account {
         balance.quantity -= quantity;
     }
 
+
+    public getBalance (assetId: string) {
+        const balance = this.balances.find((balance: Balance) => balance.assetId === assetId);
+        if (!balance) return 0;
+        return balance;
+    }
+
     public getName(): string {
         return this.name.getValue();
     }

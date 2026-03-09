@@ -15,9 +15,11 @@ test("Deve testar a execução de ordens de compra e venda", async () => {
     const book = new Book(marketId);
     const account = Account.create("John Doe", "john.doe@gmail.com", "97456321558", "asdQWE123");
     await book.insert(Order.create(account.accountId, marketId, "buy", 1, 85000));
-    expect(book.buys).toHaveLength(1);
+    const depth = book.getDepth();
+    expect(depth.buys).toHaveLength(1);
     await book.insert(Order.create(account.accountId, marketId, "sell", 1, 85000));
-    expect(book.buys).toHaveLength(0);
-    expect(book.sells).toHaveLength(0);
+    const depth2 = book.getDepth()
+    expect(depth2.buys).toHaveLength(0);
+    expect(depth2.sells).toHaveLength(0);
     expect(fills).toHaveLength(2);
 });
