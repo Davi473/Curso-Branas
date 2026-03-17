@@ -7,10 +7,12 @@
     "dev": "nodemon --exec ts-node src/api.ts"
   },
   "dependencies": {
+    "@types/amqplib": "^0.10.8",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/jest": "^30.0.0",
     "@types/sinon": "^21.0.0",
+    "amqplib": "^0.10.9",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
     "express": "^5.1.0",

@@ -33,7 +33,7 @@ test("Não deve criar uma conta se o nome for inválido", async () => {
     expect(outputSignup.message).toBe("Invalid name");
 });
 
-test("Deve criar uma ordem de compra", async () => {
+test.only("Deve criar uma ordem de compra", async () => {
     const marketId = `BTC-USD-${Math.random()}`;
     const input = {
         name: "John Doe",
