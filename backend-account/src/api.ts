@@ -18,6 +18,8 @@ import Book from "./domain/Book";
 import { OrderHandlerBook, OrderHandlerExecuteHttp, OrderHandlerExecuteOrder, OrderHandlerExecuteQueue } from "./infra/handler/OrderHandler";
 import { AxiosAdapter } from "./infra/http/HttpClient";
 import { RabbitMQAdapter } from "./infra/queue/Queue";
+import Deposit from "./application/usecase/Deposit";
+import Order from "./domain/Order";
 
 // Entrypoint
 async function main() {
@@ -31,11 +33,13 @@ async function main() {
     Registry.getInstance().provide("accountDAO", new AccountDAODatabase());
     Registry.getInstance().provide("accountAssetDAO", new AccountAssetDAODatabase());
     Registry.getInstance().provide("accountRepository", new AccountRepositoryDatabase());
-    Registry.getInstance().provide("orderRepository", new OrderRepositoryDatabase());
+    const orderRepository = new OrderRepositoryDatabase();
+    Registry.getInstance().provide("orderRepository", orderRepository);
     Registry.getInstance().provide("getAccount", new GetAccount());
     Registry.getInstance().provide("placeOrder", new PlaceOrder());
     Registry.getInstance().provide("getOrder", new GetOrder());
     Registry.getInstance().provide("getDepth", new GetDepth());
+    Registry.getInstance().provide("deposit", new Deposit());
     Registry.getInstance().provide("signup", new Signup());
     Registry.getInstance().provide("httpServer", httpServer);
     Registry.getInstance().provide("executeOrder", new ExecuteOrder());
@@ -44,6 +48,10 @@ async function main() {
     // const handle = new OrderHandlerExecuteOrder();
     // const handle = new OrderHandlerExecuteHttp();
     const handle = new OrderHandlerExecuteQueue();
+    queue.consume("orderFilled.updateOrder", async (input: any) => {
+        const order = new Order(input.orderId, input.accountId, input.marketId, input.side, input.quantity, input.price, input.fillQuantity, input.fillPrice, input.status, new Date(input.timestamp));
+        await orderRepository.update(order);
+    });
     handle.handle();
     new AccountController();
     new OrderController();

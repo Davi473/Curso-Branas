@@ -63,7 +63,6 @@ export class OrderHandlerExecuteQueue implements OrderHandler {
 
     public handle(): void {
         this.mediator.register("orderPlaced", async (order: Order) => {
-            console.log("orderPlaced");
             await this.queue.publish("orderPlaced", order);
         });
     }

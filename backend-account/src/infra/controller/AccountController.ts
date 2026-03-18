@@ -27,7 +27,7 @@ export default class AccountController {
         });
 
         this.httpServer.route("post", "/deposit", async (params: any, body: any) => {
-            const output = await this.deposit.execute(params.accountId);
+            const output = await this.deposit.execute(body);
             return output;
         });
     }

@@ -25,7 +25,7 @@ export class RabbitMQAdapter implements Queue {
     }
 
     public async publish(event: string, data: any): Promise<void> {
-        this.channel.publish(event, "", Buffer.from(JSON.parse(data)));
+        this.channel.publish(event, "", Buffer.from(JSON.stringify(data)));
     }
 
     public async setup(exchange: string, queue: any): Promise<void> {

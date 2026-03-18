@@ -1,8 +1,5 @@
 import { PgPromiseAdapter } from "../../src/infra/database/DatabaseConnection";
-
-function sleep (time: number) {
-    return new Promise(resolve => setTimeout(resolve, time));
-}
+import { sleep } from "../../src/infra/utils/sleep";
 
 async function main() {
     const connection = new PgPromiseAdapter();

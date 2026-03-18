@@ -20,7 +20,6 @@ test("Deve persistir uma conta", async () => {
     account.deposit("BTC", 100);
     await accountRepository.save(account);
     const savedAccount = await accountRepository.getById(account.accountId);
-    console.log(savedAccount);
     expect(savedAccount.accountId).toBe(account.accountId);
     expect(savedAccount.getName()).toBe(account.getName());
     expect(savedAccount.getEmail()).toBe(account.getEmail());

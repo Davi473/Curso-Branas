@@ -38,8 +38,6 @@ export default class Book {
             if (lowestSell.status === "closed") this.sells.splice(this.sells.indexOf(lowestSell), 1);
             await this.mediator.notifyAll("orderFilled", highestBuy);
             await this.mediator.notifyAll("orderFilled", lowestSell);
-            console.log(highestBuy)
-            console.log(lowestSell)
         }
     }
 
