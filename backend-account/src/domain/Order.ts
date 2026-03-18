@@ -35,4 +35,10 @@ export default class Order {
             this.status = "closed";
         }   
     }
+
+    public calculateStatus () {
+        if (this.getAvailableQuantity() === 0) {
+            this.status = "closed";
+        }   
+    }
 }

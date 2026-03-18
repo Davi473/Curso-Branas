@@ -1,4 +1,6 @@
+import CancelOrder from "../../application/usecase/CancelOrder";
 import ExecuteOrder from "../../application/usecase/ExecuteOrder";
+import UpdateOrder from "../../application/usecase/UpdateOrder";
 import Book from "../../domain/Book";
 import Order from "../../domain/Order";
 import { inject } from "../di/Registry";
@@ -8,7 +10,7 @@ import Queue from "../queue/Queue";
 import OrderRepository from "../repository/OrderRepository";
 
 export default interface OrderHandler {
-    handle (): void;
+    handle(): void;
 }
 
 export class OrderHandlerBook implements OrderHandler {
@@ -60,10 +62,20 @@ export class OrderHandlerExecuteQueue implements OrderHandler {
     mediator!: Mediator;
     @inject("queue")
     queue!: Queue;
+    @inject("updateOrder")
+    updateOrder!: UpdateOrder;
+    @inject("cancelOrder")
+    cancelOrder!: CancelOrder;
 
     public handle(): void {
         this.mediator.register("orderPlaced", async (order: Order) => {
             await this.queue.publish("orderPlaced", order);
+        });
+        this.queue.consume("orderFilled.updateOrder", async (input: any) => {
+            await this.updateOrder.execute({ orderId: input.orderId, fillQuantity: input.fillQuantity, fillPrice: input.fillPrice });
+        });
+        this.queue.consume("orderRejected.cancelOrder", async (input: any) => {
+            await this.cancelOrder.execute(input.orderId);
         });
     }
 }

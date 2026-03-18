@@ -20,6 +20,8 @@ import { AxiosAdapter } from "./infra/http/HttpClient";
 import { RabbitMQAdapter } from "./infra/queue/Queue";
 import Deposit from "./application/usecase/Deposit";
 import Order from "./domain/Order";
+import UpdateOrder from "./application/usecase/UpdateOrder";
+import CancelOrder from "./application/usecase/CancelOrder";
 
 // Entrypoint
 async function main() {
@@ -27,6 +29,9 @@ async function main() {
     const queue = new RabbitMQAdapter();
     await queue.connect();
     Registry.getInstance().provide("queue", queue);
+    await queue.setup("orderPlaced", "orderPlaced.executeOrder");
+    await queue.setup("orderFilled", "orderFilled.updateOrder");
+    await queue.setup("orderRejected", "orderRejected.cancelOrder");
     Registry.getInstance().provide("mediator", new MediatorMemory());
     Registry.getInstance().provide("httpClient", new AxiosAdapter());
     Registry.getInstance().provide("databaseConnection", new PgPromiseAdapter());
@@ -40,6 +45,8 @@ async function main() {
     Registry.getInstance().provide("getOrder", new GetOrder());
     Registry.getInstance().provide("getDepth", new GetDepth());
     Registry.getInstance().provide("deposit", new Deposit());
+    Registry.getInstance().provide("updateOrder", new UpdateOrder());
+    Registry.getInstance().provide("cancelOrder", new CancelOrder());
     Registry.getInstance().provide("signup", new Signup());
     Registry.getInstance().provide("httpServer", httpServer);
     Registry.getInstance().provide("executeOrder", new ExecuteOrder());
@@ -48,10 +55,8 @@ async function main() {
     // const handle = new OrderHandlerExecuteOrder();
     // const handle = new OrderHandlerExecuteHttp();
     const handle = new OrderHandlerExecuteQueue();
-    queue.consume("orderFilled.updateOrder", async (input: any) => {
-        const order = new Order(input.orderId, input.accountId, input.marketId, input.side, input.quantity, input.price, input.fillQuantity, input.fillPrice, input.status, new Date(input.timestamp));
-        await orderRepository.update(order);
-    });
+   
+    
     handle.handle();
     new AccountController();
     new OrderController();

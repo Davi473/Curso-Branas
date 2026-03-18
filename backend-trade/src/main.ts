@@ -12,6 +12,9 @@ async function main() {
     const httpClient = new AxiosAdapter();
     const queue = new RabbitMQAdapter();
     await queue.connect();
+    await queue.setup("orderPlaced", "orderPlaced.executeOrder");
+    await queue.setup("orderFilled", "orderFilled.updateOrder");
+    await queue.setup("orderRejected", "orderRejected.cancelOrder");
     Registry.getInstance().provide("mediator", mediator);
     const book = new Book("BTC-USD");
     httpServer.route("post", "execute_order", async (params: any, body: any) => {
@@ -21,6 +24,10 @@ async function main() {
     });
     queue.consume("orderPlaced.executeOrder", async (input: any) => {
         const order = new Order(input.orderId, input.accountId, input.marketId, input.side, input.quantity, input.price, input.fillQuantity, input.fillPrice, input.status, new Date(input.timestamp));
+        if (input.quantity > 10000) {
+            await queue.publish("orderRejected", order);
+            return;
+        }
         await book.insert(order);
     });
     mediator.register("orderFilled", async (order: Order) => {
