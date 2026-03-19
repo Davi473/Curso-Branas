@@ -161,7 +161,7 @@ test.only("Deve criar uma ordem de compra e outra de venda no mesmo valor", asyn
         quantity: 1,
         price: 85000
     });
-    await sleep(200);
+    await sleep(1000);
     const responseGetDepth = await axios.get(`http://localhost:3000/markets/${marketId}/depth`);
     const outputGetDepth = responseGetDepth.data;
     console.log(outputGetDepth);

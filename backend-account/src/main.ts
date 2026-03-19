@@ -22,6 +22,7 @@ import Deposit from "./application/usecase/Deposit";
 import Order from "./domain/Order";
 import UpdateOrder from "./application/usecase/UpdateOrder";
 import CancelOrder from "./application/usecase/CancelOrder";
+import Outbox from "./infra/outbox/Outbox";
 
 // Entrypoint
 async function main() {
@@ -32,9 +33,11 @@ async function main() {
     await queue.setup("orderPlaced", "orderPlaced.executeOrder");
     await queue.setup("orderFilled", "orderFilled.updateOrder");
     await queue.setup("orderRejected", "orderRejected.cancelOrder");
+    await queue.setup("placeOrder", "placeOrder");
     Registry.getInstance().provide("mediator", new MediatorMemory());
-    Registry.getInstance().provide("httpClient", new AxiosAdapter());
     Registry.getInstance().provide("databaseConnection", new PgPromiseAdapter());
+    Registry.getInstance().provide("outbox", new Outbox());
+    Registry.getInstance().provide("httpClient", new AxiosAdapter());
     Registry.getInstance().provide("accountDAO", new AccountDAODatabase());
     Registry.getInstance().provide("accountAssetDAO", new AccountAssetDAODatabase());
     Registry.getInstance().provide("accountRepository", new AccountRepositoryDatabase());

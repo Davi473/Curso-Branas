@@ -30,4 +30,13 @@ CREATE TABLE ccca.order (
     status TEXT,
     timestamp TIMESTAMPTZ,
     PRIMARY KEY (order_id)
-)
+);
+
+create table ccca.message (
+    message_id uuid,
+    event text,
+    data jsonb,
+    status text,
+    timestamp timestamptz,
+    primary key (message_id)
+);
