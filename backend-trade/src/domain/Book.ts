@@ -23,6 +23,7 @@ export default class Book {
             this.sells.sort((a, b) => a.price - b.price);
         }
         await this.execute();
+        this.mediator.notifyAll("orderExecuted", { marketId: order.marketId });
     }
 
     public async execute() {

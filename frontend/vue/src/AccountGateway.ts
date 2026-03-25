@@ -1,18 +1,17 @@
+import type HttpClient from "./HttpClient";
+
 export default interface AccountGateway {
     save (input: any): Promise<any>;
 }
 
 export class AccountGatewayHttp implements AccountGateway {
 
+    constructor (readonly httpClient: HttpClient) {
+    }
+
     async save(input: any): Promise<any> {
-        const response = await fetch("http://localhost:3000/signup", {
-            method: "post",
-            headers: {
-                "content-type": "application/json"
-            },
-            body: JSON.stringify(input)
-        });
-        const output = await response.json();
+        const url = "http://localhost:3000/signup";
+        const output = await this.httpClient.post(url, input);
         return output;
     }
 

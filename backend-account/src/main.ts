@@ -19,7 +19,6 @@ import { OrderHandlerBook, OrderHandlerExecuteHttp, OrderHandlerExecuteOrder, Or
 import { AxiosAdapter } from "./infra/http/HttpClient";
 import { RabbitMQAdapter } from "./infra/queue/Queue";
 import Deposit from "./application/usecase/Deposit";
-import Order from "./domain/Order";
 import UpdateOrder from "./application/usecase/UpdateOrder";
 import CancelOrder from "./application/usecase/CancelOrder";
 import Outbox from "./infra/outbox/Outbox";
@@ -53,7 +52,7 @@ async function main() {
     Registry.getInstance().provide("signup", new Signup());
     Registry.getInstance().provide("httpServer", httpServer);
     Registry.getInstance().provide("executeOrder", new ExecuteOrder());
-    Registry.getInstance().provide("book", new Book("BTC-USD"));
+    Registry.getInstance().provide("books", new Book("BTC-USD"));
     // const handle = new OrderHandlerBook();
     // const handle = new OrderHandlerExecuteOrder();
     // const handle = new OrderHandlerExecuteHttp();
